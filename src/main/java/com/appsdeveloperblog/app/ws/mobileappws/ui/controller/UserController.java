@@ -7,8 +7,10 @@ import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.Use
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,12 +24,21 @@ public class UserController {
 	@Autowired // when usercontroller is created, spring creates and injects an instance of userService 
 	UserService userService;
 	
-	@GetMapping // maps an incoming GET request to this method
-	public String getUser() {
-		return "get user was called";
+	// if no accept header is present in the GET request, the resource is returned in XML format because it comes before the JSON mediatype, in the producees section of the @getMapping annotation
+	// (the order matters)
+	@GetMapping(path="/{id}", produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // maps an incoming GET request to this method
+	public UserRest getUser(@PathVariable String id) {
+		UserRest userRest = new UserRest();
+
+		UserDto userDto = userService.getUserByUserId(id);
+		BeanUtils.copyProperties(userDto, userRest);
+
+		return userRest;
 	}
 
-	@PostMapping // maps an incoming POST request to this method
+	@PostMapping(
+		consumes= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
+		produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // maps an incoming POST request to this method
 	// @RequestBody is necessary if you want the method to be able to read the body of the http request
 	public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) {
 		UserRest userRest = new UserRest();

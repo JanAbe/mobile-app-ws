@@ -1,6 +1,8 @@
 package com.appsdeveloperblog.app.ws.mobileappws.service.impl;
 
-import com.appsdeveloperblog.app.ws.mobileappws.UserRepository;
+import java.util.ArrayList;
+
+import com.appsdeveloperblog.app.ws.mobileappws.io.repositories.UserRepository;
 import com.appsdeveloperblog.app.ws.mobileappws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.mobileappws.service.UserService;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.Utils;
@@ -8,12 +10,13 @@ import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-@Service // what does this do?? nothing, i think?
+@Service // what does this do??
 public class UserServiceImpl implements UserService {
 
 	@Autowired
@@ -47,7 +50,38 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserDetails loadUserByUsername(String arg0) throws UsernameNotFoundException {
-		return null;
+	public UserDto getUser(String email) {
+		UserEntity userEntity = userRepository.findByEmail(email);
+		if (userEntity == null) {
+			throw new UsernameNotFoundException(email);
+		}
+
+		UserDto user = new UserDto();
+		BeanUtils.copyProperties(userEntity, user);
+		return user;
+	}
+
+	@Override
+	public UserDto getUserByUserId(String userId) {
+		UserDto userDto = new UserDto();
+		UserEntity userEntity = this.userRepository.findByUserId(userId);
+		if (userEntity == null) {
+			throw new UsernameNotFoundException(userId);
+		}
+
+		BeanUtils.copyProperties(userEntity, userDto);
+
+		return userDto;
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+		UserEntity userEntity = userRepository.findByEmail(email);
+
+		if (userEntity == null) {
+			throw new UsernameNotFoundException(email);
+		}
+
+		return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
 	}
 }
