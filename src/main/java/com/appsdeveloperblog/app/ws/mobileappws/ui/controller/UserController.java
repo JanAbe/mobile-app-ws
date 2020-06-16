@@ -1,8 +1,13 @@
 package com.appsdeveloperblog.app.ws.mobileappws.ui.controller;
 
+import com.appsdeveloperblog.app.ws.mobileappws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.mobileappws.service.UserService;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
 import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.request.UserDetailsRequestModel;
+import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.ErrorMessages;
+import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.OperationStatusModel;
+import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.RequestOperationName;
+import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.UserRest;
 
 import org.springframework.beans.BeanUtils;
@@ -40,8 +45,12 @@ public class UserController {
 		consumes= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
 		produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // maps an incoming POST request to this method
 	// @RequestBody is necessary if you want the method to be able to read the body of the http request
-	public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) {
+	public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
 		UserRest userRest = new UserRest();
+
+		if (userDetails.getFirstName().isEmpty()) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
 		UserDto userDto = new UserDto();
 		BeanUtils.copyProperties(userDetails, userDto); // populate userDto with content from userDetails using .copyProperties()
@@ -52,14 +61,37 @@ public class UserController {
 		return userRest;
 	}
 
-	@PutMapping // maps an incoming PUT request to this method
-	public String updateUser() {
-		return "update user was called";
+	@PutMapping(
+		path="/{id}",
+		consumes= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
+		produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+	) // maps an incoming PUT request to this method
+	public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
+		UserRest userRest = new UserRest();
+
+		if (userDetails.getFirstName().isEmpty()) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		UserDto userDto = new UserDto();
+		BeanUtils.copyProperties(userDetails, userDto); // populate userDto with content from userDetails using .copyProperties()
+
+		UserDto updatedUser = userService.updateUser(id, userDto);
+		BeanUtils.copyProperties(updatedUser, userRest);
+
+		return userRest;
 	}
 
-	@DeleteMapping // maps an incoming DELETE request to this method
-	public String deleteUser() {
-		return "delete user was called";
+	@DeleteMapping(
+		path={"/{id}"}, 
+		produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+	) // maps an incoming DELETE request to this method
+	public OperationStatusModel deleteUser(@PathVariable String id) {
+		OperationStatusModel status = new OperationStatusModel();
+		status.setOperationName(RequestOperationName.DELETE.name());
+		this.userService.deleteUser(id);
+		status.setOperationResult(RequestOperationStatus.SUCCESS.name());
+		return status;
 	}
 
 }
