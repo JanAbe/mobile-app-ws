@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.mobileappws.service;
 
+import java.util.List;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,5 +12,6 @@ public interface UserService extends UserDetailsService {
 	public UserDto getUser(String email);
 	public UserDto getUserByUserId(String userId);
 	public UserDto updateUser(String userId, UserDto user);
-	public void deleteUser(String userId); 
+	public void deleteUser(String userId);
+	public List<UserDto> getUsers(int page, int limit);
 }

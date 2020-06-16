@@ -1,6 +1,7 @@
 package com.appsdeveloperblog.app.ws.mobileappws.service.impl;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.appsdeveloperblog.app.ws.mobileappws.io.repositories.UserRepository;
 import com.appsdeveloperblog.app.ws.mobileappws.exceptions.UserServiceException;
@@ -12,6 +13,9 @@ import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.Err
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -106,6 +110,27 @@ public class UserServiceImpl implements UserService {
 		}
 
 		this.userRepository.delete(userEntity);
+	}
+
+	@Override
+	public List<UserDto> getUsers(int page, int limit) {
+		List<UserDto> users = new ArrayList<>();
+
+		// so callers don't have to provided page=0 to get the first page, but they can use page=1
+		if (page > 0) {
+			page -= 1;
+		}
+		Pageable pageableRequest = PageRequest.of(page, limit);
+		Page<UserEntity> userPage = this.userRepository.findAll(pageableRequest);
+		List<UserEntity> foundUsers = userPage.getContent();
+
+		for (UserEntity userEntity : foundUsers) {
+			UserDto userDto = new UserDto();
+			BeanUtils.copyProperties(userEntity, userDto);
+			users.add(userDto);
+		}
+
+		return users;
 	}
 
 	@Override

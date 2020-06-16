@@ -1,5 +1,8 @@
 package com.appsdeveloperblog.app.ws.mobileappws.ui.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.appsdeveloperblog.app.ws.mobileappws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.mobileappws.service.UserService;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController // will be able to send and receive http requests
@@ -92,6 +96,23 @@ public class UserController {
 		this.userService.deleteUser(id);
 		status.setOperationResult(RequestOperationStatus.SUCCESS.name());
 		return status;
+	}
+
+	@GetMapping(produces= {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+	public List<UserRest> getUsers(
+		@RequestParam(value="page", defaultValue="0") int page,
+		@RequestParam(value="limit", defaultValue="25") int limit
+	) {
+		List<UserRest> users = new ArrayList<>();
+		List<UserDto> userDtos = this.userService.getUsers(page, limit);
+
+		for (UserDto userDto : userDtos) {
+			UserRest user = new UserRest();
+			BeanUtils.copyProperties(userDto, user);
+			users.add(user);
+		}
+
+		return users;
 	}
 
 }
