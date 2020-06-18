@@ -1,5 +1,7 @@
 package com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.request;
 
+import java.util.List;
+
 // UserDetailsRequestModle contains information that is submitted when creating a new user account.
 // Used to transform incoming json into a POJO.
 // The incoming json fields should match the property names of this class.
@@ -7,7 +9,8 @@ public class UserDetailsRequestModel {
 	private String firstName;
 	private String lastName;
 	private String email;
-	private String password;	
+	private String password;
+	private List<AddressRequestModel> addresses;
 
 	public String getFirstName() {
 		return firstName;
@@ -39,5 +42,13 @@ public class UserDetailsRequestModel {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public List<AddressRequestModel> getAddresses() {
+		return addresses;
+	}
+
+	public void setAddresses(List<AddressRequestModel> addresses) {
+		this.addresses = addresses;
 	}
 }

@@ -8,9 +8,11 @@ import com.appsdeveloperblog.app.ws.mobileappws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.mobileappws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.mobileappws.service.UserService;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.Utils;
+import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
 import com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response.ErrorMessages;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,16 +43,27 @@ public class UserServiceImpl implements UserService {
 			throw new RuntimeException("Record already exists");
 		}
 
-		UserEntity userEntity = new UserEntity();
-		BeanUtils.copyProperties(user, userEntity); // field names in user and userEntity must match
+		// create public address id and bind user to the address, for each address
+		for (AddressDto address : user.getAddresses()) {
+			address.setUserDetails(user);
+			address.setAddressId(utils.generateAddressId(30));
+		}
+
+		// BeanUtils.copyProperties(user, userEntity); // field names in user and userEntity must match
+		ModelMapper modelMapper = new ModelMapper();
+		UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
 		String publicUserId = utils.generateUserId(30);
 		userEntity.setUserId(publicUserId);
 		userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+		userEntity.setEmailVerificationToken(Utils.generateEmailVerificationToken(publicUserId));
+		userEntity.setEmailVerificationStatus(false);
 		UserEntity storedUserEntity = userRepository.save(userEntity);
 
-		UserDto userDto = new UserDto();
-		BeanUtils.copyProperties(storedUserEntity, userDto);
+		// send email to user for verification purposes
+
+		// BeanUtils.copyProperties(storedUserEntity, userDto);
+		UserDto userDto = modelMapper.map(storedUserEntity, UserDto.class);
 
 		return userDto;
 	}
@@ -141,6 +154,32 @@ public class UserServiceImpl implements UserService {
 			throw new UsernameNotFoundException(email);
 		}
 
-		return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
+		return new User(
+			userEntity.getEmail(), 
+			userEntity.getEncryptedPassword(), 
+			userEntity.getEmailVerificationStatus(), 
+			true, 
+			true, 
+			true, 
+			new ArrayList<>()
+		);
+	}
+
+	@Override
+	public boolean verifyEmailToken(String token) {
+		boolean isVerified = false;
+
+		UserEntity user = this.userRepository.findUserByEmailVerificationToken(token);
+		if (user != null) {
+			boolean hasTokenExpired = Utils.hasTokenExpired(token);
+			if (!hasTokenExpired) {
+				user.setEmailVerificationToken(null);
+				user.setEmailVerificationStatus(true);
+				this.userRepository.save(user);
+				isVerified = true;
+			}
+		}
+
+		return isVerified;
 	}
 }

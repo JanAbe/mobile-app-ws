@@ -12,4 +12,8 @@ public class AppProperties {
 	public String getTokenSecret() {
 		return env.getProperty("tokenSecret");
 	}
+
+	public String getEmail() {
+		return env.getProperty("email");
+	}
 }

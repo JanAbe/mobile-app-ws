@@ -1,5 +1,7 @@
 package com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response;
 
+import java.util.List;
+
 // UserRest contains all data of the user that gets sent back after a user has been created.
 // Used to transform POJO into JSON.
 public class UserRest {
@@ -7,6 +9,7 @@ public class UserRest {
 	private String firstName;
 	private String lastName;
 	private String email;
+	private List<AddressRest> addresses;
 
 	public String getUserId() {
 		return userId;
@@ -38,5 +41,13 @@ public class UserRest {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public List<AddressRest> getAddresses() {
+		return addresses;
+	}
+
+	public void setAddresses(List<AddressRest> addresses) {
+		this.addresses = addresses;
 	}
 }

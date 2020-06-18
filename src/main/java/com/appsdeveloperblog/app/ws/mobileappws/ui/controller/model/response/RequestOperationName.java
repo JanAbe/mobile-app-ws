@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.mobileappws.ui.controller.model.response;
 
 public enum RequestOperationName {
-	DELETE	
+	DELETE,
+	VERIFY_EMAIL
 }
