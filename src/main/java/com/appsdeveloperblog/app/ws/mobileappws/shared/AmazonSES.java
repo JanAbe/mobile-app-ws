@@ -8,11 +8,13 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.appsdeveloperblog.app.ws.mobileappws.shared.dto.UserDto;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class AmazonSES {
-	// This address must be verified with Amazon SES.
-	final String FROM = "sergey.kargopolov@swiftdeveloperblog.com"; // Utils.getEmail();
 
 	// The subject line for the email.
 	final String SUBJECT = "One last step to complete your registration with PhotoApp";
@@ -53,8 +55,10 @@ public class AmazonSES {
 		+ " Thank you!";
 	
 	public void verifyEmail(UserDto userDto) {
-		String from = Utils.getEmail();
-		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+		Utils utils = new Utils();
+		// This address must be verified with Amazon SES.
+		String from = "some-emailaddress"; // utils.getEmail();
+		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build();
 		String htmlBodyWithToken = this.HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 		String textBodyWithToken = this.TEXTBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
 
@@ -68,5 +72,41 @@ public class AmazonSES {
 
 		client.sendEmail(request);
 		System.out.println("Email sent!");
+	}
+
+	public boolean sendPasswordResetRequest(String firstName, String email, String token) {
+		Utils utils = new Utils();
+		// This address must be verified with Amazon SES.
+		String from = "some-emailaddress"; // utils.getEmail();
+
+		boolean isSent = false;
+		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard()
+											.withRegion(Regions.EU_CENTRAL_1).build();
+	
+		String htmlBodyWithToken = PASSWORD_RESET_HTMLBODY.replace("$tokenValue", token);
+			htmlBodyWithToken = htmlBodyWithToken.replace("$firstName", firstName);
+		
+		String textBodyWithToken = PASSWORD_RESET_TEXTBODY.replace("$tokenValue", token);
+			textBodyWithToken = textBodyWithToken.replace("$firstName", firstName);
+		
+		SendEmailRequest request = new SendEmailRequest()
+			.withDestination(
+				new Destination().withToAddresses(email) )
+			.withMessage(new Message()
+				.withBody(new Body()
+					.withHtml(new Content()
+						.withCharset("UTF-8").withData(htmlBodyWithToken))
+					.withText(new Content()
+						.withCharset("UTF-8").withData(textBodyWithToken)))
+				.withSubject(new Content()
+					.withCharset("UTF-8").withData(PASSWORD_RESET_SUBJECT)))
+			.withSource(from);
+
+		SendEmailResult result = client.sendEmail(request); 
+		if (result != null && (result.getMessageId() != null && !result.getMessageId().isEmpty())) {
+			isSent = true;
+		}
+
+		return isSent;
 	}
 }

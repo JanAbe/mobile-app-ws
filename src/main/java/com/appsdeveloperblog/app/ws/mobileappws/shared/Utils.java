@@ -8,13 +8,14 @@ import com.appsdeveloperblog.app.ws.mobileappws.security.SecurityConstants;
 import com.appsdeveloperblog.app.ws.mobileappws.security.AppProperties;
 import com.appsdeveloperblog.app.ws.mobileappws.SpringApplicationContext;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-@Component
+@Service
 public class Utils {
 	private final Random RANDOM = new SecureRandom();
 	private final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -38,18 +39,25 @@ public class Utils {
 	}
 
 	public static boolean hasTokenExpired(String token) {
-		Claims claims = Jwts.parser()
-							.setSigningKey(SecurityConstants.getTokenSecret())
-							.parseClaimsJws(token)
-							.getBody();
+		boolean hasExpired = false;
 
-		Date tokenExpirationDate = claims.getExpiration();
-		Date today = new Date();
+		try {
+			Claims claims = Jwts.parser()
+								.setSigningKey(SecurityConstants.getTokenSecret())
+								.parseClaimsJws(token)
+								.getBody();
 
-		return tokenExpirationDate.before(today);
+			Date tokenExpirationDate = claims.getExpiration();
+			Date today = new Date();
+			hasExpired = tokenExpirationDate.before(today);
+		} catch (ExpiredJwtException e) {
+			hasExpired = true;
+		}
+
+		return hasExpired;
 	}
 
-	public static String generateEmailVerificationToken(String userId) {
+	public String generateEmailVerificationToken(String userId) {
 		String token = Jwts.builder()
 						.setSubject(userId)
 						.setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
@@ -58,7 +66,16 @@ public class Utils {
 		return token;
 	}
 	
-	public static String getEmail() {
+	public String generatePasswordResetToken(String userId) {
+		String token = Jwts.builder()
+						.setSubject(userId)
+						.setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+						.signWith(SignatureAlgorithm.HS512, SecurityConstants.getTokenSecret())
+						.compact();
+		return token;
+	}
+	
+	public String getEmail() {
 		AppProperties appProperties = (AppProperties) SpringApplicationContext.getBean("AppProperties");
 		return appProperties.getEmail();
 	}

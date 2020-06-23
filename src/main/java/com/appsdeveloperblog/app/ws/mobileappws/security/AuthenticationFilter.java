@@ -19,13 +19,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-// Filter used to authenticate a user. Is the provided email+password combination valid.
+// Filter used to authenticate a user. Is the provided email+password combination valid, and is the email verified.
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	private final AuthenticationManager authenticationManager;
 	
@@ -52,7 +51,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 											HttpServletResponse res, 
 											FilterChain chain, 
 											Authentication auth) throws IOException, ServletException {
-		String userName =  ((User) auth.getPrincipal()).getUsername(); // email of user
+		String userName =  ((UserPrincipal) auth.getPrincipal()).getUsername(); // email of user
 		String token = Jwts.builder()
 			.setSubject(userName)
 			.setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
